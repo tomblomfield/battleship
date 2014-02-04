@@ -49,13 +49,13 @@ module Battleship
   end
 end
 
-lambda{ |path, port, secret|
+lambda do |path, port, secret|
   $:.unshift File.join(File.dirname(path), "lib")
   load path
 
   Battleship::ValidatingServer.new(
     secret, Battleship::PlayerServer.new, port
   )
-}.call(*ARGV)
+end.call(*ARGV)
 
 DRb.thread.join

@@ -21,7 +21,7 @@ You lose if:
 
 ### Additional rules
 
-* The official interpreter is Ruby 1.9.3.
+* The official interpreter is Ruby 2.1.0.
 * The player will not have access to the game objects.
 * The player may `require` Ruby source files from within a `lib` directory in the same place as the player file (i.e. `players/player.rb` can use `players/lib/foo/bar.rb` via `require "foo/bar"`.)
 * A file should not implement more than one player class.
@@ -90,4 +90,4 @@ Players are isolated using DRb.
 
 A couple of very basic players are supplied: `StupidPlayer` puts all its ships
 in a corner and guesses at random (often wasting turns by repeating itself).
-`Human Player` asks for input via the console.
+`HumanPlayer` asks for input via the console.
