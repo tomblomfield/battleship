@@ -4,7 +4,7 @@ Battleship
 The game
 --------
 
-Long version: see [Wikipedia](https://secure.wikimedia.org/wikipedia/en/wiki/Battleship_(game\))
+Long version: [see wikipedia]("https://secure.wikimedia.org/wikipedia/en/wiki/Battleship_(game\)")
 
 * Each player starts with a fleet of 5 ships, of length 5, 4, 3, 3, and 2.
 * Each player places their ships horizontally or vertically on a 10x10 grid; this is not visible to their opponent.
@@ -21,7 +21,7 @@ You lose if:
 
 ### Additional rules
 
-* The official interpreter is Ruby 1.9.2.
+* The official interpreter is Ruby 1.9.3.
 * The player will not have access to the game objects.
 * The player may `require` Ruby source files from within a `lib` directory in the same place as the player file (i.e. `players/player.rb` can use `players/lib/foo/bar.rb` via `require "foo/bar"`.)
 * A file should not implement more than one player class.
