@@ -10,9 +10,9 @@
 # Once all known ships are sunken, it will return to random shots
 # in unkown territory.
 #
+# Known BUG: it always seeks out the end of a ship even if it knows
+# that the ship is sunk
 class DestroyerStrategy
-
-  attr_accessor :state, :ships_remaining
 
   def get_dot(x, y)
     return nil if [x, y].any? { |c| c < 0 || c >= @state.size }
@@ -29,7 +29,8 @@ class DestroyerStrategy
   end
 
   def newly_destroyed_ship(ships_remaining)
-    (ships_remaining - @ships_remaining).first
+    return nil if ships_remaining.length == @ships_remaining.length
+    (@ships_remaining - ships_remaining).first || 3 # 3 is a duplicate
   end
 
   # Returns any newly updated dot
@@ -46,15 +47,17 @@ class DestroyerStrategy
   # Takes a dot on a newly destroyed ship and sinks it.
   # If we can't figure out where the ship is, leave it alone
   def sink_ship(dot, destroyed_ship)
-    p "sinking"
-    find_sunk_ship_spots.each { |dot| set_dot(dot, :sunk) }
+    p "SINKING SHIP"
+    find_sunk_ship_spots(dot, destroyed_ship).each do |dot|
+      set_dot(dot, :sunk)
+    end
   end
 
   # Returns spots corresponding to the newly sunken ship
   # If ambiguous, return empty array
   def find_sunk_ship_spots(dot, destroyed_ship)
-    hs = find_sunk_ship_spots(dot, [:left, :right])
-    vs = find_sunk_ship_spots(dot, [:up, :down])
+    hs = find_hit_ship_spots(dot, [:left, :right])
+    vs = find_hit_ship_spots(dot, [:up, :down])
     if hs.size == destroyed_ship && vs.size != destroyed_ship
       return hs
     elsif hs.size != destroyed_ship && vs.size == destroyed_ship
@@ -65,8 +68,7 @@ class DestroyerStrategy
   end
 
   def find_dot_to_the(direction, dot)
-    p "direction #{direction} #{dot}"
-    d = case direction
+    case direction
     when :left
       [dot[0] - 1, dot[1]]
     when :right
@@ -76,17 +78,15 @@ class DestroyerStrategy
     when :down
       [dot[0], dot[1] + 1]
     end
-    p "new_direction #{d}"
-    d
   end
 
   # Return a list of consecutive hit dots along an axis containing dot
   def find_hit_ship_spots(dot, directions)
     spots = [dot]
-    directions.each do dir
+    directions.each do |dir|
       neighbour = dot
       while neighbour = find_dot_to_the(dir, neighbour)
-        if get_dot(neighbour) == :hit
+        if get_dot(neighbour[0], neighbour[1]) == :hit
           spots << neighbour
         else
           break
@@ -98,19 +98,21 @@ class DestroyerStrategy
 
   def update(state, ships_remaining)
     dot = newly_updated_dot(state)
-    p "new dot #{dot}"
     set_dot(dot, state[dot[1]][dot[0]]) if dot
 
     destroyed_ship = newly_destroyed_ship(ships_remaining)
     sink_ship(dot, destroyed_ship) if destroyed_ship
-    @destroyed_ship = destroyed_ship
+    p "Destroyed #{destroyed_ship}" if destroyed_ship
+    p "Ships remaining #{ships_remaining}"
+    p "internal Ships remaining #{@ships_remaining}"
+    @ships_remaining = ships_remaining
   end
 
   def take_turn
+    sunk = @state.flatten.select{ |x| x == :sunk }.count
+    p "sunk spots #{sunk}"
     if hit_dots.size > 0
-      p "hit dots #{hit_dots}"
       likely = get_hit_dots_neighbour(hit_dots)
-      p "likely #{likely}" if likely
       likely || random_remaining
     else
       random_remaining
@@ -126,12 +128,9 @@ class DestroyerStrategy
   end
 
   def likely_target(target)
-    p "finding likely for #{target}"
-    d = directions.
-      map{ |d| find_dot_to_the(d, target) }.
-      find { |d| get_dot(*d) == :unknown}
-    p "found likely #{d}"
-    d
+    directions.
+      map { |d| find_dot_to_the(d, target) }.
+      find { |d| get_dot(*d) == :unknown }
   end
 
   def hit_dots
@@ -142,7 +141,6 @@ class DestroyerStrategy
       end
     end
     hits = @state.flatten.select{ |x| x == :hit}
-    p "hits: #{hits}"
     dots
   end
 
@@ -151,11 +149,11 @@ class DestroyerStrategy
   end
 
   def dots_left
-    state.flatten.select{ |x| x == :unknown }.count
+    @state.flatten.select{ |x| x == :unknown }.count
   end
 
   def nth_unkown(n)
-    state.each_with_index do |row, y|
+    @state.each_with_index do |row, y|
       row.each_with_index do |s, x|
         next unless s == :unknown
         return [x, y] if n == 0
