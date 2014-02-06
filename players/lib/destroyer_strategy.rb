@@ -47,7 +47,6 @@ class DestroyerStrategy
   # Takes a dot on a newly destroyed ship and sinks it.
   # If we can't figure out where the ship is, leave it alone
   def sink_ship(dot, destroyed_ship)
-    p "SINKING SHIP"
     find_sunk_ship_spots(dot, destroyed_ship).each do |dot|
       set_dot(dot, :sunk)
     end
@@ -102,15 +101,11 @@ class DestroyerStrategy
 
     destroyed_ship = newly_destroyed_ship(ships_remaining)
     sink_ship(dot, destroyed_ship) if destroyed_ship
-    p "Destroyed #{destroyed_ship}" if destroyed_ship
-    p "Ships remaining #{ships_remaining}"
-    p "internal Ships remaining #{@ships_remaining}"
     @ships_remaining = ships_remaining
   end
 
   def take_turn
     sunk = @state.flatten.select{ |x| x == :sunk }.count
-    p "sunk spots #{sunk}"
     if hit_dots.size > 0
       likely = get_hit_dots_neighbour(hit_dots)
       likely || random_remaining
