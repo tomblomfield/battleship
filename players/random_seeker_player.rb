@@ -1,6 +1,5 @@
-require "ship_placers.rb"
-require "destroyer_strategy.rb"
-require "smarter_destroyer_strategy"
+require "placement_strategies.rb"
+require "attack_strategies.rb"
 
 class RandomSeekerPlayer
 
@@ -9,11 +8,12 @@ class RandomSeekerPlayer
   end
 
   def new_game
-    RandomShipPlacer.new.place_all
+    PlacementStrategies::Random.new.place_all
   end
 
   def take_turn(state, ships_remaining)
-    @strategy ||= SmarterDestroyerStrategy.new(state, ships_remaining)
+    @strategy ||= AttackStrategies::SmarterDestroyer.new(state,
+      ships_remaining)
     @strategy.update(state, ships_remaining)
     @strategy.take_turn
   end

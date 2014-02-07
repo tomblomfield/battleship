@@ -50,11 +50,7 @@ class Tile
   end
 
   def calculate_score
-    # @score = directions.reduce do |dir, score|
-    #   score + consecutive_hit_tiles(dir)
-    # end
     @score = directions.map { |dir| consecutive_hit_tiles(dir) }.reduce(&:+)
-    # @score = directions.sum
   end
 
   def consecutive_hit_tiles(direction)
