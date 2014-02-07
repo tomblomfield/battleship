@@ -13,7 +13,7 @@ class Board
   def instantiate_tiles(state)
     state.each_with_index do |row, y|
       row.each_with_index do |status, x|
-        @tiles[[x, y]] = Tile.new(x, y, status)
+        @tiles[[x, y]] = Tile.new(x, y, status, self)
       end
     end
   end

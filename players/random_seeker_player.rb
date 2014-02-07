@@ -1,5 +1,6 @@
 require "ship_placers.rb"
 require "destroyer_strategy.rb"
+require "smarter_destroyer_strategy"
 
 class RandomSeekerPlayer
 
@@ -12,7 +13,7 @@ class RandomSeekerPlayer
   end
 
   def take_turn(state, ships_remaining)
-    @strategy ||= DestroyerStrategy.new(state, ships_remaining)
+    @strategy ||= SmarterDestroyerStrategy.new(state, ships_remaining)
     @strategy.update(state, ships_remaining)
     @strategy.take_turn
   end

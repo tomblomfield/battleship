@@ -18,16 +18,18 @@ class DestroyerStrategy
   def initialize(state, ships_remaining)
     @board = Board.new(state)
     @ships = Ships.new(ships_remaining)
+    @turn = 0
   end
 
   def update(state, ships_remaining)
+    @turn += 1
     @board.update(state)
     @ships.update(ships_remaining)
     sink_ship(@board.latest_tile, @ships.recently_sunk) if @ships.recently_sunk
   end
 
   def take_turn
-    (tile_adjecent_to_hit_tiles || @board.random_remaining).position
+    (fire_on_hit_ships || @board.random_remaining).position
   end
 
   private
@@ -68,12 +70,12 @@ class DestroyerStrategy
     tiles
   end
 
-  def tile_adjecent_to_hit_tiles
+  def fire_on_hit_ships
     @board.hit_tiles.map{ |t| adjacent_unknown_tile(t) }.compact.first
   end
 
   # A likely place for a ship tile to be
   def adjacent_unknown_tile(tile)
-    @board.get_neighbours(tile).find {|t| t.state == :unknown }
+    tile.neighbours.find {|t| t.state == :unknown }
   end
 end
