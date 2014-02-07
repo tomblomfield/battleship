@@ -12,7 +12,7 @@ class RandomSeekerPlayer
   end
 
   def take_turn(state, ships_remaining)
-    @strategy ||= AttackStrategies::SmarterDestroyer.new(state,
+    @strategy ||= AttackStrategies::Twos.new(state,
       ships_remaining)
     @strategy.update(state, ships_remaining)
     @strategy.take_turn
