@@ -23,28 +23,26 @@ class DestroyerStrategy
   def update(state, ships_remaining)
     @board.update(state)
     @ships.update(ships_remaining)
-    sink_ship(@board.last_dot, @ships.recently_sunk) if @ships.recently_sunk
+    sink_ship(@board.latest_tile, @ships.recently_sunk) if @ships.recently_sunk
   end
 
   def take_turn
-    get_hit_dots_neighbour || @board.random_remaining
+    (tile_adjecent_to_hit_tiles || @board.random_remaining).position
   end
 
   private
 
   # Takes a dot on a newly destroyed ship and sinks it.
   # If we can't figure out where the ship is, leave it alone
-  def sink_ship(dot, destroyed_ship)
-    find_sunk_ship_spots(dot, destroyed_ship).each do |dot|
-      @board.set_dot(dot, :sunk)
-    end
+  def sink_ship(tile, destroyed_ship)
+    find_sunk_ship_spots(tile, destroyed_ship).each {|t| t.update(:sunk)}
   end
 
   # Returns spots corresponding to the newly sunken ship
   # If ambiguous, return empty array
-  def find_sunk_ship_spots(dot, destroyed_ship)
-    hs = find_hit_ship_spots(dot, [:left, :right])
-    vs = find_hit_ship_spots(dot, [:up, :down])
+  def find_sunk_ship_spots(tile, destroyed_ship)
+    hs = find_hit_ship_tiles(tile, [:left, :right])
+    vs = find_hit_ship_tiles(tile, [:up, :down])
     if hs.size == destroyed_ship && vs.size != destroyed_ship
       return hs
     elsif hs.size != destroyed_ship && vs.size == destroyed_ship
@@ -54,46 +52,28 @@ class DestroyerStrategy
     end
   end
 
-  def find_dot_to_the(direction, dot)
-    case direction
-    when :left
-      [dot[0] - 1, dot[1]]
-    when :right
-      [dot[0] + 1, dot[1]]
-    when :up
-      [dot[0], dot[1] - 1]
-    when :down
-      [dot[0], dot[1] + 1]
-    end
-  end
-
-  # Return a list of consecutive hit dots along an axis containing dot
-  def find_hit_ship_spots(dot, directions)
-    spots = [dot]
+  # Return a list of consecutive hit dots along an axis containing tile
+  def find_hit_ship_tiles(tile, directions)
+    tiles = [tile]
     directions.each do |dir|
-      neighbour = dot
-      while neighbour = find_dot_to_the(dir, neighbour)
-        if @board.get_dot(neighbour[0], neighbour[1]) == :hit
-          spots << neighbour
+      t = tile
+      while t = @board.get_neighbour(t, dir)
+        if t.state == :hit
+          tiles << t
         else
           break
         end
       end
     end
-    spots
+    tiles
   end
 
-  def directions
-    [:up, :down, :left, :right]
+  def tile_adjecent_to_hit_tiles
+    @board.hit_tiles.map{ |t| adjacent_unknown_tile(t) }.compact.first
   end
 
-  def get_hit_dots_neighbour
-    @board.hit_dots.map{ |d| likely_target(d) }.compact.first
-  end
-
-  def likely_target(target)
-    directions.
-      map { |d| find_dot_to_the(d, target) }.
-      find { |d| @board.get_dot(*d) == :unknown }
+  # A likely place for a ship tile to be
+  def adjacent_unknown_tile(tile)
+    @board.get_neighbours(tile).find {|t| t.state == :unknown }
   end
 end
