@@ -6,7 +6,8 @@ class DeathPlayer
   end
 
   def new_game
-    Ship.choose_positions(Board.new_with(:empty), SHIP_LENGTHS).map(&:to_a)
+    RandomShipPositionChooser.positions(Board.new_with(:empty), SHIP_LENGTHS).
+      map(&:to_a)
   end
 
   def take_turn(state, ships_remaining)
@@ -83,5 +84,22 @@ class Board
 
   def to_s
     @data.map {|x| x.to_s }.join("\n")
+  end
+end
+
+module RandomShipPositionChooser
+  def self.positions(board, ship_lengths)
+    return [] if ship_lengths.empty?
+    position = self.random_empty_ship_position(board, ship_lengths[0])
+    [position] + self.positions(
+      position.to_coordinates.inject(board) {|b, c| b.set(c, :ship) },
+      ship_lengths[1..-1])
+  end
+
+private
+  def self.random_empty_ship_position(board, length)
+    position = Position.random(length)
+    return position if position.to_coordinates.all? {|x| board.get(x) != :ship }
+    return random_empty_ship_position(board, length)
   end
 end
