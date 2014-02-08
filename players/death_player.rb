@@ -78,6 +78,17 @@ class Board
     Board.new(data_c)
   end
 
+  def self.line(coordinate, dx, dy)
+    x, y = coordinate
+    coordinates = []
+    while x >= 0 && y >= 0 && x < SIZE && y < SIZE
+      coordinates << [x, y]
+      x += dx
+      y += dy
+    end
+
+    coordinates
+  end
   def to_list
     (0...Board::SIZE).map {|x| (0...Board::SIZE).map {|y| [[x, y], get([x, y])] }}.flatten(1)
   end
