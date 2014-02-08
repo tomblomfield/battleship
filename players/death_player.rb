@@ -11,11 +11,15 @@ class DeathPlayer
 
   def take_turn(state, ships_remaining)
     board = Board.new(state)
-    targets = ship_probabilities(ships_remaining).to_list.select {|coordinate, value|
-      board.get(coordinate) != :hit && board.get(coordinate) != :miss
-    }.sort_by {|_, value| value }.reverse
+    probabilities = ship_probabilities(ships_remaining)
 
-    targets[0][0] unless targets.empty?
+    targets =
+      Board.all_coordinates.
+      select {|c| board.get(c) == :unknown }.
+      sort_by {|c| probabilities.get(c) }.
+      reverse
+
+    targets[0] unless targets.empty?
   end
 
 private
