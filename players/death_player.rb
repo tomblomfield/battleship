@@ -6,12 +6,12 @@ class DeathPlayer
   end
 
   def new_game
-    position_ships(Board.new_with(:empty), SHIP_LENGTHS).map(&:to_a)
+    Ship.choose_positions(Board.new_with(:empty), SHIP_LENGTHS).map(&:to_a)
   end
 
   def take_turn(state, ships_remaining)
     board = Board.new(state)
-    probabilities = ship_probabilities(ships_remaining)
+    probabilities = Ship.position_probabilities(ships_remaining)
 
     targets =
       Board.all_coordinates.
@@ -20,36 +20,6 @@ class DeathPlayer
       reverse
 
     targets[0] unless targets.empty?
-  end
-
-private
-
-  def position_ships(board, ship_lengths)
-    return [] if ship_lengths.empty?
-    position = random_empty_ship_position(board, ship_lengths[0])
-    [position] + position_ships(
-      position.to_coordinates.inject(board) {|b, c| b.set(c, :ship) },
-      ship_lengths[1..-1])
-  end
-
-  def random_empty_ship_position(board, length)
-    position = Position.random(length)
-    return position if position.to_coordinates.all? {|x| board.get(x) != :ship }
-    return random_empty_ship_position(board, length)
-  end
-
-  def ship_probabilities(ship_lengths)
-    ship_lengths.inject(Board.new_with(0)) do |board, length|
-      across = Board.all_coordinates.select {|c| c[0] <= Board::SIZE-length }.
-        map {|c| Position.new(c[0], c[1], length, :across).to_coordinates }.flatten(1)
-
-      down = Board.all_coordinates.select {|c| c[1] <= Board::SIZE-length }.
-        map {|c| Position.new(c[0], c[1], length, :down).to_coordinates }.flatten(1)
-
-      (across + down).inject(board) do |board, coordinate|
-        board.set(coordinate, board.get(coordinate) + 1)
-      end
-    end
   end
 end
 
