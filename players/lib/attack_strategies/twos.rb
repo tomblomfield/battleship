@@ -1,12 +1,13 @@
-# SmarterDestroyerStrategy
+# TwosStrategy
 #
 # A class responsible for the strategy of destroying the ships
 #
-# The smarter destroyer strategy is cleverer about how it destroys
-# ships once it has discovered them. It doesn't just randomly look
-# at the adjacent tiles to the ship, but reasons in the following way:
+# The two's strategy only hits even or odd summed coordinates
+# (unless it is attacking a found ship)
+# The idea is that since the smallest ship is of size 2, it's a
+# waste of a shot to hit anything next to each other, since we
+# might as well shoot 2 away from that spot as it tells us more.
 #
-# It interpolates a line if there is one.
 module AttackStrategies
   class Twos < AttackStrategies::Base
 
