@@ -8,12 +8,12 @@ class DeathPlayer
   def new_game
     @shots = []
 
-    RandomShipPositionChooser.positions(Board.new_with(:empty), SHIP_LENGTHS).
+    RandomShipPositionChooser.positions(Board.defaults(:empty), SHIP_LENGTHS).
       map(&:to_a)
   end
 
   def take_turn(state, ships_remaining)
-    target = pick_target(Board.new(state), @shots, ships_remaining)
+    target = pick_target(state, @shots, ships_remaining)
     @shots << target if target
     target
   end
@@ -51,33 +51,29 @@ class Position
   end
 end
 
-class Board
+module Board
   SIZE = 10
 
-  def initialize(data)
-    @data = Board.copy_data(data)
+  def self.copy(board)
+    board.map(&:dup)
   end
 
-  def self.new_with(default)
-    Board.new((0...SIZE).map {|_| (0...SIZE).map {|_| default }})
-  end
-
-  def self.copy_data(data)
-    data.map(&:dup)
+  def self.defaults(default)
+    (0...SIZE).map {|_| (0...SIZE).map {|_| default }}
   end
 
   def self.all_coordinates
     (0...Board::SIZE).map {|x| (0...Board::SIZE).map {|y| [x, y] }}.flatten(1)
   end
 
-  def get(coordinate)
-    @data[coordinate[1]][coordinate[0]]
+  def self.get(board, coordinate)
+    board[coordinate[1]][coordinate[0]]
   end
 
-  def set(coordinate, value)
-    data_c = Board.copy_data(@data)
-    data_c[coordinate[1]][coordinate[0]] = value
-    Board.new(data_c)
+  def self.set(board, coordinate, value)
+    cp = Board.copy(board)
+    cp[coordinate[1]][coordinate[0]] = value
+    cp
   end
 
   def self.line(coordinate, dx, dy)
@@ -94,7 +90,6 @@ class Board
 
 
   # use state board for prob
-  # refactor next_turn to be small
   # rm to_list
 
 
@@ -102,8 +97,8 @@ class Board
     (0...Board::SIZE).map {|x| (0...Board::SIZE).map {|y| [[x, y], get([x, y])] }}.flatten(1)
   end
 
-  def to_s
-    @data.map {|x| x.to_s }.join("\n")
+  def to_s(board)
+    board.map {|x| x.to_s }.join("\n")
   end
 end
 
@@ -112,14 +107,14 @@ module RandomShipPositionChooser
     return [] if ship_lengths.empty?
     position = self.random_empty_ship_position(board, ship_lengths[0])
     [position] + self.positions(
-      position.to_coordinates.inject(board) {|b, c| b.set(c, :ship) },
+      position.to_coordinates.inject(board) {|b, c| Board.set(b, c, :ship) },
       ship_lengths[1..-1])
   end
 
 private
   def self.random_empty_ship_position(board, length)
     position = Position.random(length)
-    return position if position.to_coordinates.all? {|x| board.get(x) != :ship }
+    return position if position.to_coordinates.all? {|x| Board.get(board, x) != :ship }
     return random_empty_ship_position(board, length)
   end
 end
@@ -129,15 +124,15 @@ module ShipPositionProbability
     probability_board = distribution(ship_lengths)
     targets =
       Board.all_coordinates.
-      select {|c| board.get(c) == :unknown }.
-      sort_by {|c| probability_board.get(c) }.
+      select {|c| Board.get(board, c) == :unknown }.
+      sort_by {|c| Board.get(probability_board, c) }.
       reverse
 
     targets.empty? ? nil : targets[0]
   end
 
   def self.distribution(ship_lengths)
-    ship_lengths.inject(Board.new_with(0)) do |board, length|
+    ship_lengths.inject(Board.defaults(0)) do |board, length|
       across = Board.all_coordinates.select {|c| c[0] <= Board::SIZE-length }.
         map {|c| Position.new(c[0], c[1], length, :across).to_coordinates }.flatten(1)
 
@@ -145,7 +140,7 @@ module ShipPositionProbability
         map {|c| Position.new(c[0], c[1], length, :down).to_coordinates }.flatten(1)
 
       (across + down).inject(board) do |board, coordinate|
-        board.set(coordinate, board.get(coordinate) + 1)
+        Board.set(board, coordinate, Board.get(board, coordinate) + 1)
       end
     end
   end
@@ -153,7 +148,7 @@ end
 
 module Trace
   def self.next_target(board, shots)
-    shots.reverse.select {|s| board.get(s) == :hit }.each do |hit|
+    shots.reverse.select {|s| Board.get(board, s) == :hit }.each do |hit|
       target = find_next_target_from_hit(board, hit)
       return target if target
     end && nil # what is ruby idiom for this?
@@ -168,7 +163,7 @@ private
   end
 
   def self.find_next_target_from_line(board, coordinates)
-    coordinates.take_while {|c| board.get(c) != :miss }.
-      find {|c| board.get(c) == :unknown }
+    coordinates.take_while {|c| Board.get(board, c) != :miss }.
+      find {|c| Board.get(board, c) == :unknown }
   end
 end
