@@ -124,7 +124,7 @@ module RandomShipPositionChooser
 private
   def self.random_empty_ship_position(board, length)
     position = Position.random(length)
-    return position if position.to_coordinates.all? {|x| Board.get(board, x) != :ship }
+    return position if position.to_padded_coordinates.all? {|x| Board.get(board, x) != :ship }
     return random_empty_ship_position(board, length)
   end
 end
