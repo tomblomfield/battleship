@@ -24,14 +24,7 @@ private
     if trace_target
       trace_target
     else
-      probability_board = ShipPositionProbability.distribution(ships_remaining)
-      targets =
-        Board.all_coordinates.
-        select {|c| state_board.get(c) == :unknown }.
-        sort_by {|c| probability_board.get(c) }.
-        reverse
-
-      targets[0] unless targets.empty?
+      ShipPositionProbability.next_target(state_board, ships_remaining)
     end
   end
 end
@@ -128,6 +121,17 @@ private
 end
 
 module ShipPositionProbability
+  def self.next_target(board, ship_lengths)
+    probability_board = distribution(ship_lengths)
+    targets =
+      Board.all_coordinates.
+      select {|c| board.get(c) == :unknown }.
+      sort_by {|c| probability_board.get(c) }.
+      reverse
+
+    targets.empty? ? nil : targets[0]
+  end
+
   def self.distribution(ship_lengths)
     ship_lengths.inject(Board.new_with(0)) do |board, length|
       across = Board.all_coordinates.select {|c| c[0] <= Board::SIZE-length }.
