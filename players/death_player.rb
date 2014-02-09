@@ -13,21 +13,26 @@ class DeathPlayer
   end
 
   def take_turn(state, ships_remaining)
-    target = pick_target(Board.new(state), ships_remaining)
+    target = pick_target(Board.new(state), @shots, ships_remaining)
     @shots << target if target
     target
   end
 
 private
-  def pick_target(state_board, ships_remaining)
-    probability_board = ShipPositionProbability.distribution(ships_remaining)
-    targets =
-      Board.all_coordinates.
-      select {|c| state_board.get(c) == :unknown }.
-      sort_by {|c| probability_board.get(c) }.
-      reverse
+  def pick_target(state_board, shots, ships_remaining)
+    trace_target = Trace.next_target(state_board, shots)
+    if trace_target
+      trace_target
+    else
+      probability_board = ShipPositionProbability.distribution(ships_remaining)
+      targets =
+        Board.all_coordinates.
+        select {|c| state_board.get(c) == :unknown }.
+        sort_by {|c| probability_board.get(c) }.
+        reverse
 
-    targets[0] || nil
+      targets[0] unless targets.empty?
+    end
   end
 end
 
