@@ -137,3 +137,25 @@ module ShipPositionProbability
     end
   end
 end
+
+module Trace
+  def self.next_target(board, shots)
+    shots.reverse.select {|s| board.get(s) == :hit }.each do |hit|
+      target = find_next_target_from_hit(board, hit)
+      return target if target
+    end && nil # what is ruby idiom for this?
+  end
+
+private
+  def self.find_next_target_from_hit(board, hit)
+    find_next_target_from_line(board, Board.line(hit,   -1,  0)) || # left
+      find_next_target_from_line(board, Board.line(hit,  1,  0)) || # right
+      find_next_target_from_line(board, Board.line(hit,  0, -1)) || # up
+      find_next_target_from_line(board, Board.line(hit,  0,  1))    # down
+  end
+
+  def self.find_next_target_from_line(board, coordinates)
+    coordinates.take_while {|c| board.get(c) != :miss }.
+      find {|c| board.get(c) == :unknown }
+  end
+end
