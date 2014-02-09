@@ -115,7 +115,7 @@ end
 
 module ShipPositionProbability
   def self.next_target(board, ship_lengths)
-    probability_board = distribution(ship_lengths)
+    probability_board = distribution(board, ship_lengths)
     targets =
       Board.all_coordinates.
       select {|c| Board.get(board, c) == :unknown }.
@@ -125,15 +125,18 @@ module ShipPositionProbability
     targets.empty? ? nil : targets[0]
   end
 
-  def self.distribution(ship_lengths)
+  def self.distribution(state_board, ship_lengths)
     ship_lengths.inject(Board.defaults(0)) do |board, length|
-      across = Board.all_coordinates.select {|c| c[0] <= Board::SIZE-length }.
-        map {|c| Position.new(c[0], c[1], length, :across).to_coordinates }.flatten(1)
+      positions = Board.all_coordinates.select {|c| c[0] <= Board::SIZE-length }.
+        map {|c| Position.new(c[0], c[1], length, :across) } +
+        Board.all_coordinates.select {|c| c[1] <= Board::SIZE-length }.
+        map {|c| Position.new(c[0], c[1], length, :down) }
 
-      down = Board.all_coordinates.select {|c| c[1] <= Board::SIZE-length }.
-        map {|c| Position.new(c[0], c[1], length, :down).to_coordinates }.flatten(1)
+      coordinates = positions.
+        select {|p| p.to_coordinates.all? {|x| Board.get(state_board, x) != :miss } }.
+        map {|p| p.to_coordinates }.flatten(1)
 
-      (across + down).inject(board) do |board, coordinate|
+      coordinates.inject(board) do |board, coordinate|
         Board.set(board, coordinate, Board.get(board, coordinate) + 1)
       end
     end
