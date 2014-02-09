@@ -90,12 +90,6 @@ module Board
 
 
   # use state board for prob
-  # rm to_list
-
-
-  def to_list
-    (0...Board::SIZE).map {|x| (0...Board::SIZE).map {|y| [[x, y], get([x, y])] }}.flatten(1)
-  end
 
   def to_s(board)
     board.map {|x| x.to_s }.join("\n")
