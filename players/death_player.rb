@@ -91,7 +91,7 @@ module Board
 
   # use state board for prob
 
-  def to_s(board)
+  def self.to_s(board)
     board.map {|x| x.to_s }.join("\n")
   end
 end
