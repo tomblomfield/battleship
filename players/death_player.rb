@@ -49,6 +49,22 @@ class Position
        @direction == :down ? @y + i : @y]
     end
   end
+
+  # returns coords for ship and all immediately adjacent squares
+  def to_padded_coordinates
+    w = @direction == :across ? @length : 1
+    h = @direction == :across ? 1 : @length
+
+    all = (@x - 1..@x + w + 1).map {|i| [i, @y - 1] } + # top
+          (@x - 1..@x + w + 1).map {|i| [i, @y + 1] } + # bottom
+          (@y - 1..@y + h + 1).map {|i| [@x - 1, i] } + # left
+          (@y - 1..@y + h + 1).map {|i| [@x + 1, i] }   # right
+
+    all.select { |c|
+      c[0] >= 0 && c[0] < Board::SIZE &&
+        c[1] >= 0 && c[1] < Board::SIZE
+    } + to_coordinates
+  end
 end
 
 module Board
