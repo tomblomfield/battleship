@@ -1,5 +1,5 @@
-require "board.rb"
-require "ships.rb"
+require_relative "../board.rb"
+require_relative "../ships.rb"
 
 # DestroyerStrategy
 #

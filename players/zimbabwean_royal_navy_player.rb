@@ -1,10 +1,10 @@
-require "placement_strategies.rb"
-require "attack_strategies.rb"
+require_relative "lib/placement_strategies.rb"
+require_relative "lib/attack_strategies.rb"
 
-class RandomSeekerPlayer
+class ZimbabweanRoyalNavyPlayer
 
   def name
-    "Random Seeker Player"
+    "Zimbabwean Royal Navy"
   end
 
   def new_game
