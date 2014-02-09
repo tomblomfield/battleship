@@ -20,12 +20,9 @@ class DeathPlayer
 
 private
   def pick_target(state_board, shots, ships_remaining)
-    trace_target = Trace.next_target(state_board, shots)
-    if trace_target
-      trace_target
-    else
-      ShipPositionProbability.next_target(state_board, ships_remaining)
-    end
+    Trace.next_target(state_board, shots) ||
+      ShipPositionProbability.next_target(state_board, ships_remaining) ||
+      nil
   end
 end
 
@@ -94,6 +91,13 @@ class Board
 
     coordinates
   end
+
+
+  # use state board for prob
+  # refactor next_turn to be small
+  # rm to_list
+
+
   def to_list
     (0...Board::SIZE).map {|x| (0...Board::SIZE).map {|y| [[x, y], get([x, y])] }}.flatten(1)
   end
