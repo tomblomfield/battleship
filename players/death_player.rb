@@ -6,12 +6,15 @@ class DeathPlayer
   end
 
   def new_game
+    @shots = []
+
     RandomShipPositionChooser.positions(Board.new_with(:empty), SHIP_LENGTHS).
       map(&:to_a)
   end
 
   def take_turn(state, ships_remaining)
     target = pick_target(Board.new(state), ships_remaining)
+    @shots << target if target
     target
   end
 
