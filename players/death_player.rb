@@ -99,8 +99,8 @@ end
 module RandomShipPositionChooser
   def self.positions(board, ship_lengths)
     return [] if ship_lengths.empty?
-    position = self.random_empty_ship_position(board, ship_lengths[0])
-    [position] + self.positions(
+    position = random_empty_ship_position(board, ship_lengths[0])
+    [position] + positions(
       position.to_coordinates.inject(board) {|b, c| Board.set(b, c, :ship) },
       ship_lengths[1..-1])
   end
