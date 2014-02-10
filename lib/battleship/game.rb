@@ -28,7 +28,7 @@ module Battleship
       elsif board.sunk?
         @winner = player
       end
-      
+
       result
     end
 
