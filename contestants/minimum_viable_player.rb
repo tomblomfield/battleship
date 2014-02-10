@@ -29,21 +29,18 @@ class JeffPlayer
     # ships_remaining is an array of the remaining opponents ships
 
 
-    # if @hunt
+    @hunt = false if state[@guess[1]][@guess[0]] == :hit
 
-    #   @guess = [rand(5) * 2, rand(5) * 2]
+    if @hunt
+      begin
+        @guess = hunt_guess
+      end while  state[@guess[1]][@guess[0]] != :unknown
 
-    #   while  state[@guess[0]][@guess[1]] != :unknown
-    #     @guess = [rand(5) * 2, rand(5) * 2]
-    #   end
+    else
 
-    # else
+    end
 
-    # end
-
-
-    hunt_guess
-
+    @guess
   end
 
   # you're free to create your own methods to figure out what to do next
@@ -58,6 +55,11 @@ class JeffPlayer
     end
 
     [x, y]
+  end
+
+  def state?(state, x, y)
+
+    if state[y][x]
   end
 
 end
