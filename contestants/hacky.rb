@@ -25,17 +25,17 @@ class HackyPlayer
 
 
   def take_turn(state, ships_remaining)
+    @state = state
     # state is the known state of opponents fleet
     # ships_remaining is an array of the remaining opponents ships
 
 
-    @hunt = false if state[@guess[1]][@guess[0]] == :hit
+    # @hunt = false if state[@guess[1]][@guess[0]] == :hit
 
     if @hunt
       begin
         @guess = hunt_guess
-      end while  state[@guess[1]][@guess[0]] != :unknown
-
+      end while self.state?(@guess[0], @guess[1]) != :unknown
     else
 
     end
@@ -57,9 +57,10 @@ class HackyPlayer
     [x, y]
   end
 
-  def state?(state, x, y)
-
-    if state[y][x]
+  def state?(x, y)
+    return :outside unless (0..9).cover? x
+    return :outside unless (0..9).cover? y
+    @state[y][x]
   end
 
 end
