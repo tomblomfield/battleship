@@ -1,4 +1,4 @@
-class JeffPlayer
+class HackyPlayer
 
   def name
     # Uniquely identify your player
