@@ -2,7 +2,7 @@ class HackyPlayer
 
   def name
     # Uniquely identify your player
-    "Jeff"
+    "Hacky"
   end
 
   def new_game
@@ -28,7 +28,10 @@ class HackyPlayer
 
     # ships_remaining is an array of the remaining opponents ships
 
-    @hunt = false if check_state(@guess[0], @guess[1]) == :hit
+    if @guess && check_state(@guess[0], @guess[1]) == :hit
+      @hunt = false
+      @current_hit = @guess
+    end
 
     if @hunt
       @guess = hunt_guess
@@ -56,8 +59,43 @@ class HackyPlayer
     guess
   end
 
+
+
   def seek_guess
+    adjacents = adjacent_states(@current_hit)
+
+    adjacents.select! do |cell|
+      check_state(cell[0],cell[1]) == :unknown
+    end
+
+    if !adjacents.empty?
+      adjacents.sample
+    else
+      @hunt = true
+      hunt_guess
+    end
+
   end
+
+
+  def adjacent_states(coordinates)
+
+    x = coordinates[0]
+    y = coordinates[1]
+
+    adjacents = []
+
+    adjacents << [x + 1, y]
+    adjacents << [x - 1, y]
+    adjacents << [x, y + 1]
+    adjacents << [x, y - 1]
+
+    adjacents.reject! do |cell|
+      check_state(cell[0],cell[1]) == :outside
+    end
+    adjacents
+  end
+
 
   def check_state(x, y)
     return :outside unless (0..9).cover? x
@@ -66,4 +104,3 @@ class HackyPlayer
   end
 
 end
-
