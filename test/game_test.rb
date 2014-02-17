@@ -154,7 +154,7 @@ class GameTest < MiniTest::Unit::TestCase
     assert_equal players[1], game.winner
   end
 
-  def test_should_have_no_winner_until_all_boats_are_sunk
+  def test_should_have_no_winner_until_all_ships_are_sunk
     players = [
       MockPlayer.new([[0, 0, 2, :across]], [[0, 0], [0, 1], [1, 1]], "A"),
       MockPlayer.new([[0, 1, 2, :across]], [[0, 0], [1, 1], [0, 1]], "B")
@@ -167,7 +167,7 @@ class GameTest < MiniTest::Unit::TestCase
     assert_nil game.winner
   end
 
-  def test_should_report_winner_as_first_player_to_sink_opponents_boats
+  def test_should_report_winner_as_first_player_to_sink_opponents_ships
     players = [
       MockPlayer.new([[0, 0, 2, :across]], [[0, 0], [0, 1], [1, 1]], "A"),
       MockPlayer.new([[0, 1, 2, :across]], [[0, 0], [1, 1], [0, 1]], "B")
