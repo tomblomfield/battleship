@@ -23,9 +23,11 @@ class HackyPlayer
 
 
   def take_turn(state, ships_remaining)
-    @state = state
-    # state is the known state of opponents fleet
 
+    @state = state
+    @ships_remaining = ships_remaining
+
+    # state is the known state of opponents fleet
     # ships_remaining is an array of the remaining opponents ships
 
     # if @guess && check_state(@guess[0], @guess[1]) == :hit
@@ -38,7 +40,12 @@ class HackyPlayer
     # else
     #   @guess = seek_guess
     # end
-    map = remap_probabilty
+
+    # map = remap_probabilty
+
+    map = weight_probability
+    puts map
+
     highest_hit_coords = nil
     highest_hit_prob = 0.0
     map.each do |coords, prob|
@@ -157,10 +164,55 @@ class HackyPlayer
   end
 
 
-  def check_state(x, y)
+  def check_state(x, y = nil)
+
+    if x.is_a?(Array)
+      y = x[1]
+      x = x[0]
+    end
+
     return :outside unless (0..9).cover? x
     return :outside unless (0..9).cover? y
     @state[y][x]
+  end
+
+  def weight_probability()
+
+
+    weight_prob_map = {}
+
+    each_square do |x, y|
+      @ships_remaining.each do |ship_length|
+        [:across, :down].each do |ship_direction|
+          poss = true
+          ship_squares([x,y], ship_length, ship_direction).each do |square|
+            poss = false if [:miss, :outside].include?(check_state(square))
+          end
+          if poss == true
+            ship_squares([x,y], ship_length, ship_direction).each do |square|
+              weight_prob_map[square] ||= 0
+              weight_prob_map[square] += 1
+            end
+          end
+        end
+      end
+    end
+
+    return weight_prob_map
+  end
+
+  def ship_squares(coord, ship_length, ship_direction)
+    ship_squares = []
+
+    ship_length.times do |offset|
+      if ship_direction == :across
+        ship_squares << [(coord[0] + offset), coord[1]]
+      elsif ship_direction == :down
+        ship_squares << [coord[0], (coord[1] + offset)]
+      end
+    end
+
+    return ship_squares
   end
 
 end
