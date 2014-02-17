@@ -36,11 +36,11 @@ class AdmiralFriendlyPlayer
       end
 
       def self.get_shot target_group, shots_available
-        target_group.empty? ? get_random_shot(shots_available) : target_group.pop
+        target_group.empty? ? get_random_shot(shots_available) : get_random_shot(target_group)
       end
 
-      def self.get_random_shot shots_available
-        shot = shots_available[ rand shots_available.size  ]
+      def self.get_random_shot shot_group
+        shot = shot_group[ rand shot_group.size  ]
       end
     end
 
@@ -56,7 +56,7 @@ class AdmiralFriendlyPlayer
       def self.get_target_group shot, shots_available
         [:north, :east, :south, :west].each_with_object([]){| direction, group |
           group << get_live_adjacent_coordinate(shots_available, direction, shot[0], shot[1])
-        }.compact.sort
+        }.compact
       end
 
       def self.get_live_adjacent_coordinate shots_available, direction, y, x
@@ -70,12 +70,6 @@ class AdmiralFriendlyPlayer
         { north: ->(y,x){ [y, x-1] }, east: ->(y,x){ [y+1, x] },
           south: ->(y,x){ [y, x+1] }, west: ->(y,x){ [y-1, x] }
         }[direction].call(y,x)
-      end
-
-      def self.get_adjacent_coordinates current_grid, space
-        [:north, :east, :south, :west].each_with_object([]) do | direction, spaces |
-          spaces << get_adjacent_space(direction, space[0], space[1])
-        end
       end
     end
   end
@@ -107,5 +101,4 @@ class AdmiralFriendlyPlayer
       end
     end
   end
-
 end
