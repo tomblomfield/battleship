@@ -11,7 +11,7 @@ class MonteCarloMissileLauncher
   end
 
   def take_turn
-    200.times do
+    2000.times do
       make_guess_and_increment_counters
     end
     most_popular_xy
