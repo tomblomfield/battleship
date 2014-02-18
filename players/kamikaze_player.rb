@@ -168,7 +168,9 @@ module Kamikaze
     end
 
     def color
-      ((@x + @y) % 2 == 0) ? :red : :black
+      return :gold if ((@x + @y) % 4 == 0)
+      return :red if ((@x + @y) % 2 == 0)
+      :black
     end
 
     def can_hide?(ship_size)
@@ -375,6 +377,7 @@ module Kamikaze
       end
 
       def seek_and_destroy
+        @board.find_cells(state: :unknown,color: :gold).sample ||
         @board.find_cells(state: :unknown,color: :red).sample
       end
 
