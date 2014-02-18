@@ -1,8 +1,6 @@
-# $:.unshift File.expand_path("../lib", __FILE__)
 require "board"
 require "monte_carlo_missile_launcher"
 require "random_placer"
-require "pry"
 
 class BoatfaceKillahPlayer
   def name
