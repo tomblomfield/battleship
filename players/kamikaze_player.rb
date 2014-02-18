@@ -8,7 +8,7 @@ class KamikazePlayer
   end
 
   def take_turn(state, ships_remaining)
-    p state
+    state
     board.fire!(state,ships_remaining)
   end
 
@@ -296,9 +296,13 @@ module Kamikaze
       if vectors_present?
         vector_shots.sample.coordinates
       elsif wounded_ship?
-        fire_around_it
-      else
+        fire_around_it.coordinates
+      elsif seek_and_destroy
         seek_and_destroy.coordinates
+      elsif false_vector_ignores
+        false_vector_ignores.coordinates
+      else
+        @board.find_cells(state: :unknown).sample
       end
     end
 
@@ -322,8 +326,12 @@ module Kamikaze
         @board.find_cells(state: :hit, vectors?: true).flat_map(&:vectors).flat_map(&:open_ends).uniq
       end
 
+      def false_vector_ignores
+        hit_neighbors.select{|c| c.color == :red }.sample
+      end
+
       def fire_around_it
-        hit_neighbors.sample.coordinates
+        hit_neighbors.sample
       end
 
       def seek_and_destroy
@@ -371,12 +379,10 @@ module Kamikaze
       end
 
       def open_ends
-        return [] if @length >= @board.biggest_ship_remaining
         ends.select {|cell| cell.unknown? }
       end
 
       def open?
-        return false if @length >= @board.biggest_ship_remaining
         !open_ends.empty?
       end
 
