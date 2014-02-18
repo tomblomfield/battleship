@@ -51,7 +51,7 @@ module PlacementStrategies
     end
 
     # Is this dot on the board?
-    def valid_dot?(dot)
+    def invalid_dot?(dot)
       x, y = dot
       x < 0 || x >= 10 || y < 0 || y >= 10
     end
@@ -77,17 +77,17 @@ module PlacementStrategies
     def ship_surrounding_dots(placement)
       x, y, ship, orientation = placement
       if orientation == :across
-        down = placement_dots([x, y+1, ship, direction])
-        up = placement_dots([x, y-1, ship, direction])
-        left = [x-1, y]
-        right = [x + ship, y]
+        down = ship_dots([x, y+1, ship, orientation])
+        up = ship_dots([x, y-1, ship, orientation])
+        left = [[x-1, y]]
+        right = [[x + ship, y]]
       else
-        left = placement_dots([x -1, y, ship, direction])
-        right = placement_dots([x + 1, y, ship, direction])
-        up = [x, y -1]
-        down = [x, y + ship]
+        left = ship_dots([x -1, y, ship, orientation])
+        right = ship_dots([x + 1, y, ship, orientation])
+        up = [[x, y -1]]
+        down = [[x, y + ship]]
       end
-      [down, up, left, right].flatten(1).filter { valid_dot?(d) }
+      [down, up, left, right].flatten(1).reject { |d| invalid_dot?(d) }
     end
   end
 end
