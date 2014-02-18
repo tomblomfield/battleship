@@ -111,6 +111,14 @@ module Kamikaze
       ((@x + @y) % 2 == 0) ? :red : :black
     end
 
+    def can_hide?(ship_size)
+      max_hide.map {|c,max| max >= ship_size }.any?
+    end
+
+    def can_hide_both_ways?(ship_size)
+      max_hide.map {|c,max| max >= ship_size }.all?
+    end
+
     def neighbors(attrs={})
       [[@x+1,@y],[@x-1,@y],[@x,@y+1],[@x,@y-1]].map do |(x,y)|
         @board.find_cell(attrs.merge(x: x, y: y))
@@ -121,11 +129,33 @@ module Kamikaze
       "#<KamikazePlayer::Cell @x=#{@x}, @y=#{@y}, @state=#{@state}>"
     end
 
-    [:ship,:hit,:miss,:unknown].each do |state|
+    [:ship,:hit,:miss,:unknown,:marked].each do |state|
       define_method("#{state}?") do
         /#{state}/i === @state
       end
     end
+
+    private
+      # can_hide?(3,:x,:+)
+      def max_hide
+        [:x,:y].inject({}) do |h,c|
+          h.merge(c => [:+,:-].inject(1) { |i,d| i + how_far_unknown(c,d) })
+        end
+      end
+
+      def coordinate_scope
+        {x: @x, y: @y}
+      end
+
+      def how_far_unknown(coordinate,direction)
+        i = 1
+        loop do
+          cell = @board.find_cell(coordinate_scope.merge(coordinate => send(coordinate).send(direction,i)))
+          break unless (cell && cell.unknown?)
+          i += 1
+        end
+        i - 1
+      end
 
   end
 end
@@ -261,6 +291,24 @@ module Kamikaze
 
       def seek_and_destroy
         @board.find_cells(state: :unknown,color: :red).sample
+      end
+
+  end
+end
+
+module Kamikaze
+  class Plan
+    def initialize(cells=[],biggest_ship_remaining)
+      @cells = cells
+      @ship_length = biggest_ship_remaining
+    end
+
+    private
+
+      def generate_firing_plan!
+        cells.shuffle.each do |cell|
+          cell.state = :marked if cell.mark?(@ship_length)
+        end
       end
 
   end
