@@ -8,7 +8,8 @@ class KamikazePlayer
   end
 
   def take_turn(state, ships_remaining)
-    p board.fire!(state,ships_remaining)
+    p board.fire!(state,ships_remaining).inspect
+    board.fire!(state,ships_remaining)
   end
 
   private
@@ -54,13 +55,22 @@ module Kamikaze
     end
 
     def fire!(state,ships_remaining)
-      p @state = state
+      @state = state
+      @ships_remaining = ships_remaining
       load_state!(state)
       Kamikaze::Commander.new(self,ships_remaining).next_shot_coordinates
     end
 
     def inspect
       "#<KamikazePlayer::Board>"
+    end
+
+    def moves
+      100 - find_cells(unknown?: true).count
+    end
+
+    def no_hits?
+      !find_cell(hit?: true)
     end
 
 
@@ -74,6 +84,19 @@ module Kamikaze
           cell = find_cell(x: x, y: y)
           cell.state = state[y][x]
         end
+        mark_sunk_ships!
+      end
+
+      def mark_sunk_ships!
+        sunk_ships.each do |ship_length|
+          find_cells(min_ship_length: ship_length).each do |cell|
+            cell.state = :sunk
+          end
+        end
+      end
+
+      def sunk_ships
+        [5,4,3,3,2] - @ships_remaining
       end
 
       def iterate_coordinates
@@ -130,21 +153,42 @@ module Kamikaze
       end.compact
     end
 
+    def vectors
+      neighbors(state: @state).map do |c|
+        Vector.new(self,c,@board)
+      end
+    end
+
+    def vectors?
+      !vectors.empty?
+    end
+
     def inspect
       "#<KamikazePlayer::Cell @x=#{@x}, @y=#{@y}, @state=#{@state}>"
     end
 
-    [:ship,:hit,:miss,:unknown,:marked].each do |state|
+    [:ship,:hit,:miss,:unknown,:sunk].each do |state|
       define_method("#{state}?") do
         /#{state}/i === @state
       end
+    end
+
+    def min_ship_length
+      possible_ships.values.max
     end
 
     private
       # can_hide?(3,:x,:+)
       def max_hide
         [:x,:y].inject({}) do |h,c|
-          h.merge(c => [:+,:-].inject(1) { |i,d| i + how_far_unknown(c,d) })
+          h.merge(c => [:+,:-].inject(1) { |i,d| i + how_far(:unknown?,c,d) })
+        end
+      end
+
+      def possible_ships
+        return {} unless hit?
+        [:x,:y].inject({}) do |h,c|
+          h.merge(c => [:+,:-].inject(1) { |i,d| i + how_far(:hit?,c,d) })
         end
       end
 
@@ -152,11 +196,11 @@ module Kamikaze
         {x: @x, y: @y}
       end
 
-      def how_far_unknown(coordinate,direction)
+      def how_far(attribute,coordinate,direction)
         i = 1
         loop do
           cell = @board.find_cell(coordinate_scope.merge(coordinate => send(coordinate).send(direction,i)))
-          break unless (cell && cell.unknown?)
+          break unless (cell && cell.send(attribute))
           i += 1
         end
         i - 1
@@ -255,8 +299,10 @@ module Kamikaze
     end
 
     def next_shot_coordinates
-      if wounded_ship?
-        eradicate_it!
+      if vectors_present?
+        vector_shots.sample.coordinates
+      elsif wounded_ship?
+        fire_around_it
       else
         seek_and_destroy.coordinates
       end
@@ -269,25 +315,17 @@ module Kamikaze
       end
 
       def hit_neighbors
-        @board.find_cells(state: :hit).flat_map do |cell|
+        @board.find_cells(state: :hit, vectors?: false).flat_map do |cell|
           cell.neighbors(state: :unknown)
         end
       end
 
-      def eradicate_it!
-        if vectors_present?
-          vector_shots.sample
-        else
-          fire_around_it
-        end
-      end
-
       def vectors_present?
-        false
+        !vector_shots.empty?
       end
 
       def vector_shots
-        @board.find_cells(state: :hit).inject([])
+        @board.find_cells(state: :hit, vectors?: true).flat_map(&:vectors).flat_map(&:open_ends).uniq
       end
 
       def fire_around_it
@@ -302,19 +340,49 @@ module Kamikaze
 end
 
 module Kamikaze
-  class Plan
-    def initialize(cells=[],biggest_ship_remaining)
-      @cells = cells
-      @ship_length = biggest_ship_remaining
+  class Vector
+    attr_reader :coordinate, :min, :max
+    def initialize(cell1,cell2,board)
+      @cell1 = cell1
+      @cell2 = cell2
+      @board = board
+      @state = cell1.state
+      @coordinate = find_coordinate(cell1,cell2)
+      @coordinate_value = cell1.send(@coordinate)
+      @var_coordinate = @coordinate == :x ? :y : :x
+      @min = how_far(:-)
+      @max = how_far(:+)
     end
 
-    private
-
-      def generate_firing_plan!
-        cells.shuffle.each do |cell|
-          cell.state = :marked if cell.mark?(@ship_length)
+    # private
+      def find_coordinate(cell1,cell2)
+        [:x,:y].each do |coord|
+          return coord if cell1.send(coord) == cell2.send(coord)
         end
       end
+
+      def how_far(direction)
+        i = 1
+        loop do
+          cell = @board.find_cell(@coordinate => @coordinate_value, @var_coordinate => @cell1.send(@var_coordinate).send(direction,i))
+          break unless (cell && cell.send("#{@state}?"))
+          i += 1
+        end
+        @cell1.send(@var_coordinate).send(direction,(i-1))
+      end
+
+      def ends
+        [@board.find_cell(@coordinate => @coordinate_value,@var_coordinate => (@min-1)),@board.find_cell(@coordinate => @coordinate_value,@var_coordinate => (@max+1))].compact
+      end
+
+      def open_ends
+        ends.select {|cell| cell.unknown? }
+      end
+
+      def open?
+        !open_ends.empty?
+      end
+
 
   end
 end
