@@ -8,8 +8,9 @@ class KamikazePlayer
   end
 
   def take_turn(state, ships_remaining)
-    state
     board.fire!(state,ships_remaining)
+  rescue
+    [rand(9),rand(9)]
   end
 
   private
@@ -128,6 +129,7 @@ module Kamikaze
       def record_sunk_ships!
         add_sunk_ship! if ship_sunk_last_turn
         load_known_sunk_ships!
+      rescue
       end
 
       def load_known_sunk_ships!
@@ -142,7 +144,7 @@ module Kamikaze
 
       def add_sunk_ship!
         vector = vectors.find{|v| v.includes_cell?(last_turns_cell) }
-        if vector.length == ship_sunk_last_turn
+        if vector && vector.length == ship_sunk_last_turn
           vector.cells.each do |cell|
             @@sunk_ship_coordinates << cell.coordinates
           end
