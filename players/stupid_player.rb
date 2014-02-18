@@ -5,7 +5,7 @@ class StupidPlayer
 
   def new_game
     [
-      [0, 5, 5, :across],
+      [0, 0, 5, :across],
       [0, 1, 4, :across],
       [0, 2, 3, :across],
       [0, 3, 3, :across],
