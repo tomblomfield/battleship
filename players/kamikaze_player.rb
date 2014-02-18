@@ -86,7 +86,12 @@ module Kamikaze
 
       def match?(cell,attrs={})
         attrs.each do |attribute,value|
-          return false unless cell.send(attribute) == value
+          a = case attribute
+          when Array then cell.send(attribute[0],*attribute[1..-1])
+          else cell.send(attribute)
+          end
+
+          return false unless a == value
         end
         true
       end
