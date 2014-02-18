@@ -55,6 +55,7 @@ class HackyPlayer
   private
 
   def check_for_loners
+    # the only thing I found was myself
   end
 
   def hunt_guess
