@@ -33,6 +33,9 @@ module Stats
   end
 end
 
+
+abort "usage: fitness.rb player_file_name" if ARGV.empty?
+
 path = ARGV[0]
 $:.unshift File.join(File.dirname(path), "lib")
 load path
