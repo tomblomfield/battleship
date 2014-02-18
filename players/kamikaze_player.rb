@@ -23,11 +23,6 @@ module Kamikaze
     def valid_coordinates?(x,y)
       x > -1 && x < 10 && y > -1 && y < 10
     end
-
-    def vector(*cells)
-      return :y if cells.map(&:x).uniq.length == 1
-      return :x if cells.map(&:y).uniq.length == 1
-    end
   end
 end
 
@@ -36,6 +31,7 @@ module Kamikaze
   class Board
     include Coordinates
     attr_reader :cells, :state
+
     def initialize
       @cells = []
       set_up_cells!
@@ -50,6 +46,9 @@ module Kamikaze
     end
 
     def place_ships!
+      @@last_turn_ships_remaining = []
+      @@sunk_ship_coordinates = []
+      @@last_turn_coords = []
       ships = Kamikaze::Admiral.new(self).place_ships!
       ships.map(&:to_input)
     end
@@ -58,7 +57,11 @@ module Kamikaze
       @state = state
       @ships_remaining = ships_remaining
       load_state!(state)
-      Kamikaze::Commander.new(self,ships_remaining).next_shot_coordinates
+      record_sunk_ships!
+      coords = Kamikaze::Commander.new(self,ships_remaining).next_shot_coordinates
+      @@last_turn_ships_remaining = ships_remaining
+      @@last_turn_coords = coords
+      coords
     end
 
     def inspect
@@ -77,6 +80,10 @@ module Kamikaze
       @ships_remaining.max
     end
 
+    def vectors
+      find_cells(state: :hit, vectors?: true).flat_map(&:vectors).uniq { |v| [:coordinate,:min,:max,:length,:state].map{|a| v.send(a) } }
+    end
+
     private
       def set_up_cells!
         iterate_coordinates {|x,y| @cells << Cell.new(x,y,self) }
@@ -87,10 +94,6 @@ module Kamikaze
           cell = find_cell(x: x, y: y)
           cell.state = state[y][x]
         end
-      end
-
-      def sunk_ships
-        [5,4,3,3,2] - @ships_remaining
       end
 
       def iterate_coordinates
@@ -111,6 +114,39 @@ module Kamikaze
           return false unless a == value
         end
         true
+      end
+
+      def ship_sunk_last_turn
+        lt_remaining = @@last_turn_ships_remaining.dup
+        @ships_remaining.each do |ship|
+          found = lt_remaining.index(ship)
+          lt_remaining.delete_at(found) if found
+        end
+        lt_remaining.first
+      end
+
+      def record_sunk_ships!
+        add_sunk_ship! if ship_sunk_last_turn
+        load_known_sunk_ships!
+      end
+
+      def load_known_sunk_ships!
+        @@sunk_ship_coordinates.each do |coord|
+          find_cell(x: coord[0], y: coord[1]).state = :sunk
+        end
+      end
+
+      def last_turns_cell
+        find_cell(x: @@last_turn_coords[0], y: @@last_turn_coords[1]) if @@last_turn_coords
+      end
+
+      def add_sunk_ship!
+        vector = vectors.find{|v| v.includes_cell?(last_turns_cell) }
+        if vector.length == ship_sunk_last_turn
+          vector.cells.each do |cell|
+            @@sunk_ship_coordinates << cell.coordinates
+          end
+        end
       end
   end
 end
@@ -323,11 +359,13 @@ module Kamikaze
       end
 
       def vector_shots
-        @board.find_cells(state: :hit, vectors?: true).flat_map(&:vectors).flat_map(&:open_ends).uniq
+        @board.vectors.flat_map(&:open_ends).uniq
       end
 
       def false_vector_ignores
-        hit_neighbors.select{|c| c.color == :red }.sample
+        @board.find_cells(state: :hit).flat_map do |cell|
+          cell.neighbors(state: :unknown)
+        end.sample
       end
 
       def fire_around_it
@@ -343,7 +381,7 @@ end
 
 module Kamikaze
   class Vector
-    attr_reader :coordinate, :min, :max
+    attr_reader :coordinate, :min, :max, :length, :state
     def initialize(cell1,cell2,board)
       @cell1 = cell1
       @cell2 = cell2
@@ -357,7 +395,26 @@ module Kamikaze
       @length = (@max - @min) + 1
     end
 
-    # private
+    def cells
+      (@min..@max).map do |c|
+        @board.find_cell(@coordinate => @coordinate_value, @var_coordinate => c)
+      end
+    end
+
+    def includes_cell?(cell)
+      cells.include?(cell)
+    end
+
+    def open_ends
+      ends.select {|cell| cell.unknown? }
+    end
+
+    def open?
+      !open_ends.empty?
+    end
+
+
+    private
       def find_coordinate(cell1,cell2)
         [:x,:y].each do |coord|
           return coord if cell1.send(coord) == cell2.send(coord)
@@ -377,15 +434,6 @@ module Kamikaze
       def ends
         [@board.find_cell(@coordinate => @coordinate_value,@var_coordinate => (@min-1)),@board.find_cell(@coordinate => @coordinate_value,@var_coordinate => (@max+1))].compact
       end
-
-      def open_ends
-        ends.select {|cell| cell.unknown? }
-      end
-
-      def open?
-        !open_ends.empty?
-      end
-
 
   end
 end
