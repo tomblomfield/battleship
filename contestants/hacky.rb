@@ -2,7 +2,7 @@ class HackyPlayer
 
   def name
     # Uniquely identify your player
-    "Hacky"
+    "Hacky the Old and Grizzled Hackbot"
   end
 
   def new_game
@@ -13,38 +13,30 @@ class HackyPlayer
     @hunt = true
 
     [
-      [0, 0, 5, :down],
-      [4, 4, 4, :across],
-      [9, 3, 3, :down],
-      [2, 2, 3, :across],
-      [9, 7, 2, :down]
-    ]
+      [
+        [4, 0, 5, :across],
+        [0, 6, 4, :down],
+        [2, 7, 3, :across],
+        [5, 2, 3, :across],
+        [9, 7, 2, :down]
+      ],
+      [
+        [9, 4, 5, :down],
+        [0, 6, 4, :down],
+        [2, 7, 3, :across],
+        [0, 1, 3, :across],
+        [7, 9, 2, :across]
+      ]
+    ].sample
   end
 
 
   def take_turn(state, ships_remaining)
-
     @state = state
     @ships_remaining = ships_remaining
 
-    # state is the known state of opponents fleet
-    # ships_remaining is an array of the remaining opponents ships
-
-    # if @guess && check_state(@guess[0], @guess[1]) == :hit
-    #   @hunt = false
-    #   @current_hit = @guess
-    # end
-
-    # if @hunt
-    #   @guess = hunt_guess
-    # else
-    #   @guess = seek_guess
-    # end
-
-    # map = remap_probabilty
-
     map = weight_probability
-    puts map
+    # puts map
 
     highest_hit_coords = nil
     highest_hit_prob = 0.0
@@ -62,6 +54,9 @@ class HackyPlayer
 
   private
 
+  def check_for_loners
+  end
+
   def hunt_guess
     begin
       x = rand(10)
@@ -77,48 +72,6 @@ class HackyPlayer
     guess
   end
 
-
-  def remap_probabilty
-    map = {}
-    hits = []
-    unknown = []
-    misses = []
-
-    each_square do |x, y|
-      case check_state x, y
-      when :unknown
-        unknown << [x, y]
-      when :hit
-        hits << [x, y]
-      when :miss
-        misses << [x, y]
-      end
-    end
-
-    each_square do |x, y|
-      map[[x,y]] = (17.0 - hits.length) / unknown.length
-    end
-
-    unknown.each do |u|
-      adjacent_statuses = adjacent_states(u).reject do |adj|
-        check_state(adj[0], adj[1]) == :miss
-      end
-
-      map[u] = 0 if adjacent_statuses.length == 0
-    end
-
-    misses.each do |miss|
-      map.delete miss
-    end
-
-    hits.each do |hit|
-      map.delete hit
-    end
-
-    puts map
-    sleep 1
-    map
-  end
 
   def seek_guess
     adjacents = adjacent_states(@current_hit)
@@ -177,28 +130,42 @@ class HackyPlayer
   end
 
   def weight_probability()
-
-
     weight_prob_map = {}
 
     each_square do |x, y|
       @ships_remaining.each do |ship_length|
         [:across, :down].each do |ship_direction|
           poss = true
+          hits = 0
           ship_squares([x,y], ship_length, ship_direction).each do |square|
             poss = false if [:miss, :outside].include?(check_state(square))
+            hits += 2 if check_state(square) == :hit
+            hits += 10 if check_loner(square)
           end
           if poss == true
             ship_squares([x,y], ship_length, ship_direction).each do |square|
               weight_prob_map[square] ||= 0
-              weight_prob_map[square] += 1
+              weight_prob_map[square] += 1 + hits
             end
           end
         end
       end
     end
 
+    weight_prob_map.reject! do |cell|
+      check_state(cell[0],cell[1]) == :hit
+    end
+
+    # puts weight_prob_map
     return weight_prob_map
+  end
+
+  def check_loner(coord)
+    return false if check_state(coord) != :hit
+    adjacent_states(coord).each do |adj|
+      return false if check_state(adj) == :hit
+    end
+    true
   end
 
   def ship_squares(coord, ship_length, ship_direction)
