@@ -8,7 +8,7 @@ class ZimbabweanRoyalNavyPlayer
   end
 
   def new_game
-    PlacementStrategies::Random.new.place_all
+    PlacementStrategies::RandomNotTouching.new.place_all
   end
 
   def take_turn(state, ships_remaining)
