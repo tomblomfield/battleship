@@ -1,7 +1,7 @@
 $:.unshift File.expand_path("./lib", __FILE__)
 
 require "./lib/board"
-require "./lib/statistical_guesser"
+require "./lib/monte_carlo_missile_launcher"
 require "./lib/snipe_guesser"
 require "./lib/random_placer"
 
@@ -24,4 +24,4 @@ class BoatfaceKillahPlayer
   end
 end
 
-p BoatfaceKillahPlayer.new.new_game
+p BoatfaceKillahPlayer.new.take_turn(Board.new.empty_board, Board::INITIAL_FLEET)
