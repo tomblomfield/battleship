@@ -1,0 +1,5 @@
+require_relative "attack_strategies/base.rb"
+require_relative "attack_strategies/destroyer.rb"
+require_relative "attack_strategies/smarter_destroyer.rb"
+require_relative "attack_strategies/twos.rb"
+require_relative "attack_strategies/fours.rb"
