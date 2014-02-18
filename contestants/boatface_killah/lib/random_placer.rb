@@ -2,19 +2,18 @@ require "board"
 
 # Places ships randomly
 class RandomPlacer
-  attr_accessor :board
   def initialize(board)
     @board = board
   end
 
   # Places all ships, returns an ary of placements
   def place_all_ships
-    fleet = Board::INITIAL_FLEET
+    fleet = Board::INITIAL_FLEET.dup
     placements = []
     until fleet.empty?
       placement = self.class.random_placement(fleet.first)
-      if board_with_placement = board.place(placement)
-        board = board_with_placement
+      if board_with_placement = @board.place(placement)
+        @board = board_with_placement
         placements << placement
         fleet.shift
       end
