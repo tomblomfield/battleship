@@ -1,10 +1,9 @@
-# Board that keeps track of the probability that a ship is in each position
+# Immutable board that keeps track of the probability that a ship is in each 
+# position
 class Board
   SIZE = 10
   INITIAL_FLEET = [5, 4, 3, 3, 2]
   ORIENTATIONS = [:down, :across]
-
-  attr_accessor :board # matrix of states
 
   def initialize(board = empty_board)
     @board = board
@@ -23,32 +22,33 @@ class Board
     return unless can_place?(placement)
 
     new_board = @board.dup
-    placement.expand_placement.each do |xy|
-      new_board.board[y][x] = :ship
+    placement.expand_placement.each do |x, y|
+      new_board[y][x] = :ship
     end
     Board.new(new_board)
   end
 
   def can_place?(placement)
     placement.expand_placement.all? do |xy|
-      [:unknown, :hit].inlude?(board_hash[xy])
+      [:unknown, :hit].include?(board_hash[xy])
     end
   end
 
   private
 
-  # Hash that maps [x, y] positions to states
+  # Optimization - Hash that maps [x, y] positions to states
   def board_hash
-    @state_hash ||= create_board_hash
+    @board_hash ||= create_board_hash
   end
 
   def create_board_hash
-    state_hash = {}
-    @state.each_with_index do |row, y|
+    board_hash = {}
+    @board.each_with_index do |row, y|
       row.each_with_index do |state, x|
-        state_hash[[x,y]] = state
+        board_hash[[x,y]] = state
       end
     end
+    board_hash
   end
 end
 

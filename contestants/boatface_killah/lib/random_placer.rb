@@ -1,40 +1,31 @@
-require "board"
+require "./lib/board"
 
 # Places ships randomly
 class RandomPlacer
-  attr_accessor :board, :placements
+  attr_accessor :board
   def initialize(board)
     @board = board
-    @placements = []
   end
 
   # Places all ships, stores them in @placements
   def place_all_ships
-    Board::INITIAL_FLEET.inject(@board) do |board, length|
-      place_ship(board, length, true)
+    fleet = Board::INITIAL_FLEET
+    placements = []
+    until fleet.empty?
+      placement = random_placement(fleet.first)
+      if board_with_placement = board.place(placement)
+        placements << placement
+        fleet.shift
+      end
     end
+    placements
   end
 
-  # Randomly places a ship, keeps trying random spots until it succeeds
-  #
-  # Returns a new board
-  # Adds the placement to @placements if store_placements is true
-  def place_ship(board, length, store_placements = false)
-    placement = random_placement(length)
-
-    if board_with_placement = board.place(placement)
-      @placements << placement if store_placements
-      board_with_placement
-    else
-      place_ship(board, length, store_placements) # try again
-    end
-  end
-
-  private
   def random_placement(length)
     Placement.new(random_coord, random_coord, length, random_direction)
   end
 
+  private
   def random_direction
     Board::ORIENTATIONS.sample
   end
