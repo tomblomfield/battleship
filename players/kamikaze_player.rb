@@ -302,7 +302,7 @@ module Kamikaze
       elsif false_vector_ignores
         false_vector_ignores.coordinates
       else
-        @board.find_cells(state: :unknown).sample
+        @board.find_cells(state: :unknown).sample.coordinates
       end
     end
 
