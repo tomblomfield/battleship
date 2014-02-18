@@ -8,7 +8,7 @@ class KamikazePlayer
   end
 
   def take_turn(state, ships_remaining)
-    p board.fire!(state,ships_remaining).inspect
+    p state
     board.fire!(state,ships_remaining)
   end
 
@@ -73,6 +73,9 @@ module Kamikaze
       !find_cell(hit?: true)
     end
 
+    def biggest_ship_remaining
+      @ships_remaining.max
+    end
 
     private
       def set_up_cells!
@@ -83,15 +86,6 @@ module Kamikaze
         iterate_coordinates do |x,y|
           cell = find_cell(x: x, y: y)
           cell.state = state[y][x]
-        end
-        mark_sunk_ships!
-      end
-
-      def mark_sunk_ships!
-        sunk_ships.each do |ship_length|
-          find_cells(min_ship_length: ship_length).each do |cell|
-            cell.state = :sunk
-          end
         end
       end
 
@@ -352,6 +346,7 @@ module Kamikaze
       @var_coordinate = @coordinate == :x ? :y : :x
       @min = how_far(:-)
       @max = how_far(:+)
+      @length = (@max - @min) + 1
     end
 
     # private
@@ -376,10 +371,12 @@ module Kamikaze
       end
 
       def open_ends
+        return [] if @length >= @board.biggest_ship_remaining
         ends.select {|cell| cell.unknown? }
       end
 
       def open?
+        return false if @length >= @board.biggest_ship_remaining
         !open_ends.empty?
       end
 
