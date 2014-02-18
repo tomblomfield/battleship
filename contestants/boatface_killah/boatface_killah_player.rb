@@ -1,9 +1,8 @@
-$:.unshift File.expand_path("./lib", __FILE__)
-
-require "./lib/board"
-require "./lib/monte_carlo_missile_launcher"
-require "./lib/snipe_guesser"
-require "./lib/random_placer"
+# $:.unshift File.expand_path("../lib", __FILE__)
+require "board"
+require "monte_carlo_missile_launcher"
+require "random_placer"
+require "pry"
 
 class BoatfaceKillahPlayer
   def name
@@ -11,17 +10,11 @@ class BoatfaceKillahPlayer
   end
 
   def new_game
-    placer = RandomPlacer.new(Board.new).place_all_ships.map(&:to_a)
+    RandomPlacer.new(Board.new).place_all_ships.map(&:to_a)
   end
 
   def take_turn(state, ships_remaining)
-    # state is the known state of opponents fleet
-    # ships_remaining is an array of the remaining opponents ships
-
     board = Board.new(state)
-    # SnipeGuesser.take_turn(board, ships_remaining) ||
-    StatisticalGuesser.new(board, ships_remaining).take_turn
+    MonteCarloMissileLauncher.new(board, ships_remaining).take_turn
   end
 end
-
-p BoatfaceKillahPlayer.new.take_turn(Board.new.empty_board, Board::INITIAL_FLEET)

@@ -1,5 +1,5 @@
-require "./lib/random_placer"
-require "./lib/board"
+require "random_placer"
+require "board"
 
 # Randomly places ships in legal position and then adds up the likelihood that
 # a ship is in any give spot
@@ -11,7 +11,7 @@ class MonteCarloMissileLauncher
   end
 
   def take_turn
-    20000.times do
+    200.times do
       make_guess_and_increment_counters
     end
     most_popular_xy
@@ -21,21 +21,47 @@ class MonteCarloMissileLauncher
   # Matrix of board positions with the relative likelihood that a ship is in
   # that position
   def matrix
-    @matrix ||= Hash.new(0)
+    @matrix ||= create_matrix
+  end
+
+  def create_matrix
+    matrix = {}
+    10.times do |x|
+      10.times { |y| matrix[[x,y]] = 0 }
+    end
+    matrix
   end
 
   # Attempts to place a boat randomly. If it succeeds, increment all the counters in the position
   def make_guess_and_increment_counters
-    placement = RandomPlacer.new(@board).random_placement(random_ship)
+    placement = RandomPlacer.random_placement(random_ship)
     if @board.can_place?(placement)
       placement.expand_placement.each do |xy|
-        matrix[xy] += 1
+        matrix[xy] += score(xy)
       end
     end
   end
 
+  # Ships are more likely to be placed where there are already hits
+  def score(xy)
+    case @board.state(xy)
+    when :hit
+      10
+    when :unknown
+      1
+    else
+      0
+    end
+  end
+
   def most_popular_xy
-    @matrix.to_a.sort_by { |key, value| -value }.first.first
+    unguessed = @matrix.to_a.select do |xy, count|
+      @board.unknown_xy?(xy)
+    end
+
+    unguessed.sort_by { |xy, count| -count }.first.first
+  rescue NoMethodError # If none of our placements hit a valid ship
+    nil
   end
 
   def random_ship

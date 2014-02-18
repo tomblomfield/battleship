@@ -1,4 +1,4 @@
-require "./lib/board"
+require "board"
 
 # Places ships randomly
 class RandomPlacer
@@ -7,13 +7,14 @@ class RandomPlacer
     @board = board
   end
 
-  # Places all ships, stores them in @placements
+  # Places all ships, returns an ary of placements
   def place_all_ships
     fleet = Board::INITIAL_FLEET
     placements = []
     until fleet.empty?
-      placement = random_placement(fleet.first)
+      placement = self.class.random_placement(fleet.first)
       if board_with_placement = board.place(placement)
+        board = board_with_placement
         placements << placement
         fleet.shift
       end
@@ -21,16 +22,15 @@ class RandomPlacer
     placements
   end
 
-  def random_placement(length)
+  def self.random_placement(length)
     Placement.new(random_coord, random_coord, length, random_direction)
   end
 
-  private
-  def random_direction
-    Board::ORIENTATIONS.sample
+  def self.random_coord
+    (0...Board::SIZE).to_a.sample
   end
 
-  def random_coord
-    (0...Board::SIZE).to_a.sample
+  def self.random_direction
+    Board::ORIENTATIONS.sample
   end
 end

@@ -1,4 +1,4 @@
-# Immutable board that keeps track of the probability that a ship is in each 
+# Immutable board that keeps track of the probability that a ship is in each
 # position
 class Board
   SIZE = 10
@@ -15,9 +15,9 @@ class Board
   end
 
   # Boats can intersect with positions that are [:unknown, :hit]
-  # 
+  #
   # Returns a new board with an updated placement
-  # Returns nil if the ship could not be placed 
+  # Returns nil if the ship could not be placed
   def place(placement)
     return unless can_place?(placement)
 
@@ -30,11 +30,24 @@ class Board
 
   def can_place?(placement)
     placement.expand_placement.all? do |xy|
-      [:unknown, :hit].include?(board_hash[xy])
+      legal_xy?(xy)
     end
   end
 
+  def state(xy)
+    board_hash[xy]
+  end
+
+  def unknown_xy?(xy)
+    state(xy) == :unknown
+  end
+
   private
+
+  def legal_xy?(xy)
+    [:unknown, :hit].include?(board_hash[xy]) &&
+    xy.all? { |val| (0...SIZE).to_a.include?(val) }
+  end
 
   # Optimization - Hash that maps [x, y] positions to states
   def board_hash
